@@ -106,7 +106,7 @@ function AppContent() {
     } else if (analysis.results.length > 0) {
       const topResult = analysis.results[0];
       if (topResult.isExternal) {
-        responseContent = `I couldn't find a specific match in my local cache. However, you can search these comprehensive databases:\n\n${topResult.externalUrls.map(link => `• [${link.label}](${link.url})`).join('\n')}`;
+        responseContent = `${topResult.text}\n\n${topResult.externalUrls.map(link => `• [${link.label}](${link.url})`).join('\n')}`;
       } else {
         responseContent = `Based on **${topResult.source}**, specifically **${topResult.section} (${topResult.title})**:\n\n"${topResult.text}"\n\n**LEGAL REMEDY:**\n${topResult.remedy}\n\n**RECOMMENDED STEPS:**\n${topResult.steps.map(step => `• ${step}`).join('\n')}`;
         if (topResult.evidence && topResult.evidence.length > 0) responseContent += `\n\n**EVIDENCE COLLECTION (HOW TO PROVE):**\n${topResult.evidence.map(e => `• ${e}`).join('\n')}`;
