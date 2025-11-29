@@ -135,7 +135,10 @@ export const analyzeQuery = async (query, history) => {
             body: JSON.stringify({ messages: [...history, { role: 'user', content: query }] })
         });
 
-        if (!response.ok) throw new Error('API Error');
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || errData.details || `HTTP ${response.status}`);
+        }
 
         const data = await response.json();
 
