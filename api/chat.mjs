@@ -49,6 +49,12 @@ GUIDELINES:
             parts: [{ text: msg.content }]
         }));
 
+        // Gemini Requirement: First message must be 'user'
+        // Remove any leading 'model' messages (like the welcome message)
+        while (history.length > 0 && history[0].role === 'model') {
+            history.shift();
+        }
+
         const lastMessage = messages[messages.length - 1].content;
 
         const chat = model.startChat({
