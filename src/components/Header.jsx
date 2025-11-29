@@ -11,7 +11,7 @@ const Header = ({ currentMode, handlePrintReport }) => {
                 <div>
                     <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2">
                         NyayaSahayak
-                        <span className="text-[10px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded border border-orange-500/30 font-mono">v1.3 Cloud</span>
+                        <span className="text-[10px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded border border-orange-500/30 font-mono">v1.4 Cloud</span>
                     </h1>
                     <p className="text-xs text-slate-400">AI Legal Counsel • {currentMode === 'chat' ? 'Active Consultation' : 'Knowledge Browser'}</p>
                 </div>
