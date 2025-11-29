@@ -156,7 +156,15 @@ export const analyzeQuery = async (query, history) => {
         };
 
     } catch (error) {
-        console.warn("Cloud API failed, falling back to local brain:", error);
-        return localAnalyzeQuery(query, history);
+        console.warn("Cloud API failed:", error);
+        // Fallback to local brain, but append a debug message
+        const localResult = localAnalyzeQuery(query, history);
+        return {
+            ...localResult,
+            results: [{
+                ...localResult.results[0],
+                text: `[CLOUD ERROR: ${error.message}] Falling back to local database...\n\n${localResult.results[0].text}`
+            }]
+        };
     }
 };
