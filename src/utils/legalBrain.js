@@ -137,7 +137,8 @@ export const analyzeQuery = async (query, history) => {
 
         if (!response.ok) {
             const errData = await response.json().catch(() => ({}));
-            throw new Error(errData.error || errData.details || `HTTP ${response.status}`);
+            const errorMessage = errData.details ? `${errData.error}: ${errData.details}` : (errData.error || `HTTP ${response.status}`);
+            throw new Error(errorMessage);
         }
 
         const data = await response.json();
