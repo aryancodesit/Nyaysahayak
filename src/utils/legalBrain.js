@@ -20,11 +20,10 @@ export const checkSafety = (query) => {
     return { safe: true };
 };
 
-export const analyzeQuery = (query, history) => {
+export const localAnalyzeQuery = (query, history) => {
     // 1. Context Awareness
     let searchContext = query;
 
-    // Check if we need context from previous messages
     // Check if we need context from previous messages
     const contextTriggers = [
         "it", "this", "that", "he", "she", "they", "him", "her",
@@ -77,7 +76,7 @@ export const analyzeQuery = (query, history) => {
         "privacy": ["K.S. Puttaswamy v. Union of India (2017)", "R. Rajagopal v. State of Tamil Nadu (1994)"],
         "cyber": ["Shreya Singhal v. Union of India (2015)", "Avnish Bajaj v. State (NCT) of Delhi (2005)"],
         "murder": ["K.M. Nanavati v. State of Maharashtra (1961)", "Bachan Singh v. State of Punjab (1980)"],
-        "theft": ["Pyare Lal Bhargava v. State of Rajasthan (1963)"],
+        "theft": ["Pyare Lal Bhargava v. State of Maharashtra (1963)"],
         "sexual": ["Vishaka v. State of Rajasthan (1997)", "Independent Thought v. Union of India (2017)"],
         "consumer": ["Indian Medical Association v. V.P. Shantha (1995)"],
         "driving": ["S. Rajaseekaran v. Union of India (2014)"],
@@ -125,4 +124,39 @@ export const analyzeQuery = (query, history) => {
         contextUsed: searchContext !== query,
         results: enrichedResults
     };
+};
+
+export const analyzeQuery = async (query, history) => {
+    try {
+        // Try Cloud API first
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: [...history, { role: 'user', content: query }] })
+        });
+
+        if (!response.ok) throw new Error('API Error');
+
+        const data = await response.json();
+
+        // Return in a format compatible with App.jsx
+        return {
+            contextUsed: true,
+            isCloud: true,
+            results: [{
+                id: 'cloud_response',
+                source: 'NyayaSahayak AI (Cloud)',
+                section: 'Expert Advice',
+                title: 'Legal Consultation',
+                text: data.content,
+                remedy: '',
+                steps: [],
+                evidence: []
+            }]
+        };
+
+    } catch (error) {
+        console.warn("Cloud API failed, falling back to local brain:", error);
+        return localAnalyzeQuery(query, history);
+    }
 };

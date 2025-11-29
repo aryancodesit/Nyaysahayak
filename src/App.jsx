@@ -88,40 +88,43 @@ function AppContent() {
     updateCurrentSessionMessages(newHistory);
     setIsTyping(true);
 
-    setTimeout(() => {
-      const safetyCheck = checkSafety(text);
-      if (!safetyCheck.safe) {
-        updateCurrentSessionMessages([...newHistory, { role: 'ai', content: safetyCheck.message, contextUsed: false }]);
-        setIsTyping(false);
-        return;
-      }
-
-      const analysis = analyzeQuery(text, currentMessages);
-      let responseContent = "";
-
-      if (analysis.results.length > 0) {
-        const topResult = analysis.results[0];
-        if (topResult.isExternal) {
-          responseContent = `I couldn't find a specific match in my local cache. However, you can search these comprehensive databases:\n\n${topResult.externalUrls.map(link => `• [${link.label}](${link.url})`).join('\n')}`;
-        } else {
-          responseContent = `Based on **${topResult.source}**, specifically **${topResult.section} (${topResult.title})**:\n\n"${topResult.text}"\n\n**LEGAL REMEDY:**\n${topResult.remedy}\n\n**RECOMMENDED STEPS:**\n${topResult.steps.map(step => `• ${step}`).join('\n')}`;
-          if (topResult.evidence && topResult.evidence.length > 0) responseContent += `\n\n**EVIDENCE COLLECTION (HOW TO PROVE):**\n${topResult.evidence.map(e => `• ${e}`).join('\n')}`;
-          if (topResult.caseLaws && topResult.caseLaws.length > 0) {
-            responseContent += `\n\n**RELEVANT CASE LAWS:**\n${topResult.caseLaws.map(c => {
-              const safeQuery = c.replace(/[()]/g, '');
-              return `• [${c}](https://www.google.com/search?q=${encodeURIComponent(safeQuery + " supreme court judgment")})`;
-            }).join('\n')}`;
-          }
-          if (analysis.results.length > 1 && !analysis.results[1].isExternal) responseContent += `\n\n**ALSO RELEVANT:**\nSee ${analysis.results[1].section} of ${analysis.results[1].source}.`;
-          responseContent += `\n\n**FURTHER RESEARCH:**\n• [Google Search](https://www.google.com/search?q=${encodeURIComponent(text + " indian law")})\n• [India Code](https://www.indiacode.nic.in/)\n• [Constitution of India](https://legislative.gov.in/constitution-of-india/)`;
-        }
-      } else {
-        responseContent = "I could not find a specific legal section in my current database matching your query. However, generally in Indian Law, you should document all evidence and approach the nearest police station or consult a lawyer for specific advice. \n\nWould you like me to search for something else?";
-      }
-
-      updateCurrentSessionMessages([...newHistory, { role: 'ai', content: responseContent, contextUsed: analysis.contextUsed }]);
+    // 1. Safety Check
+    const safetyCheck = checkSafety(text);
+    if (!safetyCheck.safe) {
+      updateCurrentSessionMessages([...newHistory, { role: 'ai', content: safetyCheck.message, contextUsed: false }]);
       setIsTyping(false);
-    }, 1500);
+      return;
+    }
+
+    // 2. Analyze Query
+    const analysis = await analyzeQuery(text, currentMessages);
+
+    let responseContent = "";
+
+    if (analysis.isCloud) {
+      responseContent = analysis.results[0].text;
+    } else if (analysis.results.length > 0) {
+      const topResult = analysis.results[0];
+      if (topResult.isExternal) {
+        responseContent = `I couldn't find a specific match in my local cache. However, you can search these comprehensive databases:\n\n${topResult.externalUrls.map(link => `• [${link.label}](${link.url})`).join('\n')}`;
+      } else {
+        responseContent = `Based on **${topResult.source}**, specifically **${topResult.section} (${topResult.title})**:\n\n"${topResult.text}"\n\n**LEGAL REMEDY:**\n${topResult.remedy}\n\n**RECOMMENDED STEPS:**\n${topResult.steps.map(step => `• ${step}`).join('\n')}`;
+        if (topResult.evidence && topResult.evidence.length > 0) responseContent += `\n\n**EVIDENCE COLLECTION (HOW TO PROVE):**\n${topResult.evidence.map(e => `• ${e}`).join('\n')}`;
+        if (topResult.caseLaws && topResult.caseLaws.length > 0) {
+          responseContent += `\n\n**RELEVANT CASE LAWS:**\n${topResult.caseLaws.map(c => {
+            const safeQuery = c.replace(/[()]/g, '');
+            return `• [${c}](https://www.google.com/search?q=${encodeURIComponent(safeQuery + " supreme court judgment")})`;
+          }).join('\n')}`;
+        }
+        if (analysis.results.length > 1 && !analysis.results[1].isExternal) responseContent += `\n\n**ALSO RELEVANT:**\nSee ${analysis.results[1].section} of ${analysis.results[1].source}.`;
+        responseContent += `\n\n**FURTHER RESEARCH:**\n• [Google Search](https://www.google.com/search?q=${encodeURIComponent(text + " indian law")})\n• [India Code](https://www.indiacode.nic.in/)\n• [Constitution of India](https://legislative.gov.in/constitution-of-india/)`;
+      }
+    } else {
+      responseContent = "I could not find a specific legal section in my current database matching your query. However, generally in Indian Law, you should document all evidence and approach the nearest police station or consult a lawyer for specific advice. \n\nWould you like me to search for something else?";
+    }
+
+    updateCurrentSessionMessages([...newHistory, { role: 'ai', content: responseContent, contextUsed: analysis.contextUsed }]);
+    setIsTyping(false);
   };
 
   return (
